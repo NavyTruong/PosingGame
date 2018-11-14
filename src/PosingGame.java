@@ -43,7 +43,7 @@ public class PosingGame extends PApplet {
 	// sets 0,0 to center of screen
 	public void setScale(float zoom) {
 		scale(zoom* width/2.0f, zoom * -width/2.0f);
-		translate(1f/zoom , -PROJECTOR_RATIO/zoom );		
+		translate(1f/zoom , -PROJECTOR_RATIO/zoom );
 	}
 
 	public void settings() {
@@ -103,6 +103,9 @@ public class PosingGame extends PApplet {
 			drawJoint(kneeLeft);
 			drawJoint(footRight);
 			drawJoint(footLeft);
+
+			scale(.01f);
+			scale(1, -1);
 			float rightShoulderAngle = calculateAngle(elbowRight, spine, spineBase);
 			if (rightShoulderAngle > 0) {
 				displayAngle(rightShoulderAngle, elbowRight);
@@ -117,14 +120,13 @@ public class PosingGame extends PApplet {
 	
 	private void displayAngle(float degree, PVector location) {
 		fill(255,0,0);
-		scale(.01f);
 		text("" + (int)(degree) + "", location.x, location.y);
 	}
 	
 	private void drawJoint (PVector v) {
 		if (v != null) {
 			fill(0, 0, 0);
-			ellipse(v.x, v.y, .1f,.1f);
+			ellipse(v.x, v.y, .05f,.05f);
 		}
 	}
 	
@@ -139,7 +141,7 @@ public class PosingGame extends PApplet {
 	private float calculateAngle(PVector a, PVector b, PVector c) {
 		if (a != null && b!=null && c!=null) {
 			PVector orientation = PVector.sub(b, c);
-			return angleOf(a, b, orientation);
+			return Math.abs(angleOf(a, b, orientation));
 		}
 		return -1;
 	}
