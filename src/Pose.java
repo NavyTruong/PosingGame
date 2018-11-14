@@ -13,8 +13,6 @@ public class Pose {
 		this.image = image;
 		this.leftArmAngle = leftArmAngle;
 		this.rightArmAngle = rightArmAngle;	
-		
-		
 	}
 	
 	public PImage getImage() {
@@ -48,11 +46,9 @@ public class Pose {
 		//app.line(100, 110, 100, 140);
 		//app.line(100, 125,80, 110);
 		//app.line(100, 125, 120, 110);
-		poseImage = app.loadImage("poses.png");
 		app.pushMatrix();
 		app.scale(1,-1);
-		app.image(poseImage, -1, -1, 2, 2);
+		app.image(this.image, -1, -1, 2, 2);
 		app.popMatrix();
-		
 	}	
 }

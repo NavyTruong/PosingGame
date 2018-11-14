@@ -16,11 +16,11 @@ import processing.core.PVector;
  *
  */
 public class PosingGame extends PApplet {
-	
 	private static int PROJECTOR_WIDTH = 1024;
 	private static int PROJECTOR_HEIGHT = 786;
 	private static float PROJECTOR_RATIO = (float)PROJECTOR_HEIGHT/(float)PROJECTOR_WIDTH;
 	private TCPBodyReceiver kinectReader;
+	private PoseCollection poses;
 
 	public void createWindow(boolean useP2D, boolean isFullscreen, float windowsScale) {
 		if (useP2D) {
@@ -58,6 +58,7 @@ public class PosingGame extends PApplet {
 			System.out.println("Unable to connect tao kinect server");
 			exit();
 		}
+		poses = new PoseCollection(this);
 	}
 	
 	public void draw(){
@@ -67,6 +68,7 @@ public class PosingGame extends PApplet {
 		//draw person
 		KinectBodyData bodyData = kinectReader.getNextData();
 		if(bodyData == null) return;
+		poses.drawPose(this);
 		Body person = bodyData.getPerson(0);
 		if(person != null){
 			PVector head = person.getJoint(Body.HEAD);
@@ -87,7 +89,15 @@ public class PosingGame extends PApplet {
 			fill(255,255,255);
 			noStroke();
 			drawConnection(elbowRight, spine);
+			drawConnection(elbowLeft, spine);
+			drawConnection(head, spine);
+			drawConnection(elbowRight, handRight);
+			drawConnection(elbowLeft, handLeft);
 			drawConnection(spine, spineBase);
+			drawConnection(spineBase, kneeRight);
+			drawConnection(spineBase, kneeLeft);
+			drawConnection(kneeLeft, footLeft);
+			drawConnection(kneeRight, footRight);
 			drawJoint(head);
 			drawJoint(spine);
 			drawJoint(spineBase);
