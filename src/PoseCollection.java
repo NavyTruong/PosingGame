@@ -14,15 +14,33 @@ public class PoseCollection {
 			//poses.add(pose = new Pose(pose.getImage(), pose.getLeftArmAngle(), pose.getRightArmAngle() ));
 		//}
 		PImage img = app.loadImage("poses.png");
-		addPose(img, 90, 90);
+		addPose(img, 90, 90, 180, 180, 90, 120, 180, 45);
 	}
 	
 	public void drawPose(PApplet app){
 		Pose pose = poses.peek();
-		pose.draw(app);
+		if (pose != null) {
+			pose.draw(app);
+		}
 	}
 	
-	public void addPose(PImage image, float leftAngle, float rightAngle){
-		poses.add(new Pose(image, leftAngle, rightAngle));
+	public Pose getCurrentPose() {
+		Pose pose = poses.peek();
+		while (pose == null && !poses.isEmpty()) {
+			poses.poll();
+			pose = poses.peek();
+		}
+		return pose;
+	}
+	
+	public void addPose(PImage image, float leftShoulderAngle, float rightShoulderAngle, float leftElbowAngle, float rightElbowAngle, 
+			float leftHipAngle, float rightHipAngle, float leftKneeAngle, float rightKneeAngle){
+		poses.add(new Pose(image, leftShoulderAngle, rightShoulderAngle, leftElbowAngle, rightElbowAngle, 
+				leftHipAngle, rightHipAngle, leftKneeAngle, rightKneeAngle));
+	}
+	
+	public boolean removePose() {
+		Pose removedPose = poses.poll();
+		return (removedPose != null);
 	}
 }

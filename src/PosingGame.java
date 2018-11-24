@@ -2,6 +2,7 @@ import java.io.IOException;
 
 import edu.mtholyoke.cs.comsc243.kinect.Body;
 import edu.mtholyoke.cs.comsc243.kinect.KinectBodyData;
+import edu.mtholyoke.cs.comsc243.kinect.Quat;
 import edu.mtholyoke.cs.comsc243.kinectTCP.TCPBodyReceiver;
 import processing.core.PApplet;
 import processing.core.PVector;
@@ -21,6 +22,16 @@ public class PosingGame extends PApplet {
 	private static float PROJECTOR_RATIO = (float)PROJECTOR_HEIGHT/(float)PROJECTOR_WIDTH;
 	private TCPBodyReceiver kinectReader;
 	private PoseCollection poses;
+	private Pose currentPose;
+	
+	private float leftShoulderAngle;
+	private float rightShoulderAngle;
+	private float leftElbowAngle;
+	private float rightElbowAngle;
+	private float leftHipAngle;
+	private float rightHipAngle;
+	private float leftKneeAngle;
+	private float rightKneeAngle;
 
 	public void createWindow(boolean useP2D, boolean isFullscreen, float windowsScale) {
 		if (useP2D) {
@@ -72,6 +83,7 @@ public class PosingGame extends PApplet {
 		Body person = bodyData.getPerson(0);
 		if(person != null){
 			PVector head = person.getJoint(Body.HEAD);
+			// Quat q = person.getJointOrientation(Body.HAND_LEFT);
 			PVector spine = person.getJoint(Body.SPINE_SHOULDER);
 			PVector spineBase = person.getJoint(Body.SPINE_BASE);
 			PVector shoulderRight = person.getJoint(Body.SHOULDER_RIGHT);
@@ -80,57 +92,146 @@ public class PosingGame extends PApplet {
 			PVector handLeft = person.getJoint(Body.HAND_LEFT);
 			PVector elbowRight = person.getJoint(Body.ELBOW_RIGHT);
 			PVector elbowLeft = person.getJoint(Body.ELBOW_LEFT);
-//			PVector hipRight = person.getJoint(Body.HIP_RIGHT);
-//			PVector hipLeft = person.getJoint(Body.HIP_LEFT);
+			PVector hipRight = person.getJoint(Body.HIP_RIGHT);
+			PVector hipLeft = person.getJoint(Body.HIP_LEFT);
 			PVector kneeRight  = person.getJoint(Body.KNEE_RIGHT);
 			PVector kneeLeft = person.getJoint(Body.KNEE_LEFT);
 			PVector footRight = person.getJoint(Body.FOOT_RIGHT);
 			PVector footLeft = person.getJoint(Body.FOOT_LEFT);
 			fill(255,255,255);
+			
 			noStroke();
-			drawConnection(elbowRight, spine);
-			drawConnection(elbowLeft, spine);
+			drawConnection(elbowRight, shoulderRight);
+			drawConnection(elbowLeft, shoulderLeft);
+			drawConnection(hipRight, shoulderRight);
+			drawConnection(hipLeft, shoulderLeft);
+			drawConnection(spine, shoulderRight);
+			drawConnection(spine, shoulderLeft);
 			drawConnection(head, spine);
 			drawConnection(elbowRight, handRight);
 			drawConnection(elbowLeft, handLeft);
 			drawConnection(spine, spineBase);
-			drawConnection(spineBase, kneeRight);
-			drawConnection(spineBase, kneeLeft);
+			drawConnection(spineBase, hipRight);
+			drawConnection(spineBase, hipLeft);
+			drawConnection(kneeRight, hipRight);
+			drawConnection(kneeLeft, hipLeft);
 			drawConnection(kneeLeft, footLeft);
 			drawConnection(kneeRight, footRight);
+			
 			drawJoint(head);
 			drawJoint(spine);
 			drawJoint(spineBase);
-//			drawJoint(shoulderRight);
-//			drawJoint(shoulderLeft);
+			drawJoint(shoulderRight);
+			drawJoint(shoulderLeft);
 			drawJoint(handRight);
 			drawJoint(handLeft);
 			drawJoint(elbowRight);
 			drawJoint(elbowLeft);
-//			drawJoint(hipRight);
-//			drawJoint(hipLeft);
+			drawJoint(hipRight);
+			drawJoint(hipLeft);
 			drawJoint(kneeRight);
 			drawJoint(kneeLeft);
 			drawJoint(footRight);
 			drawJoint(footLeft);
-
-			scale(.01f);
-			scale(1, -1);
-			float rightShoulderAngle = calculateAngle(elbowRight, spine, spineBase);
-			if (rightShoulderAngle > 0) {
-				displayAngle(rightShoulderAngle, elbowRight);
-			}
 			
-			float leftShoulderAngle = calculateAngle(elbowLeft, spine, spineBase);
-			if (leftShoulderAngle > 0) {
-				displayAngle(leftShoulderAngle, elbowLeft);
+			currentPose = poses.getCurrentPose();
+			
+			leftShoulderAngle = calculateAngle(elbowLeft, shoulderLeft, hipLeft, currentPose.getLeftShoulderAngle());
+			rightShoulderAngle = calculateAngle(elbowRight, shoulderRight, hipRight, currentPose.getRightShoulderAngle());
+			leftElbowAngle = calculateAngle(handLeft, elbowLeft, shoulderLeft, currentPose.getLeftElbowAngle());
+			rightElbowAngle = calculateAngle(handRight, elbowRight, shoulderRight, currentPose.getRightElbowAngle());
+			leftHipAngle = calculateAngle(shoulderLeft, hipLeft, kneeLeft, currentPose.getLeftHipAngle());
+			rightHipAngle = calculateAngle(shoulderRight, hipRight, kneeRight, currentPose.getRightHipAngle());
+			leftKneeAngle = calculateAngle(hipLeft, kneeLeft, footLeft, currentPose.getLeftKneeAngle());
+			rightKneeAngle = calculateAngle(hipRight, kneeRight, footRight, currentPose.getRightKneeAngle());
+			
+			boolean isCorrectPose = checkCorrectPose(shoulderLeft, shoulderRight, elbowLeft, elbowRight, hipLeft, hipRight, kneeLeft, kneeRight);
+			if (isCorrectPose) {
+				poses.removePose();
 			}
 		}
 	}
 	
-	private void displayAngle(float degree, PVector location) {
-		fill(255,0,0);
-		text("" + (int)(degree) + "", location.x, location.y);
+	private boolean checkCorrectPose(PVector shoulderLeft, PVector shoulderRight, PVector elbowLeft, PVector elbowRight, 
+			PVector hipLeft, PVector hipRight, PVector kneeLeft, PVector kneeRight) {
+		boolean isCorrect = true;
+		
+		if (leftShoulderAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(leftShoulderAngle, currentPose.getLeftShoulderAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		if (rightShoulderAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(rightShoulderAngle, currentPose.getRightShoulderAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		if (leftElbowAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(leftElbowAngle, currentPose.getLeftElbowAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		if (rightElbowAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(rightElbowAngle, currentPose.getRightElbowAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		if (leftHipAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(leftHipAngle, currentPose.getLeftHipAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		if (rightHipAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(rightHipAngle, currentPose.getRightHipAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		if (leftKneeAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(leftKneeAngle, currentPose.getLeftKneeAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		if (rightKneeAngle > 0) {
+			boolean isJointCorrect = checkCorrectJoint(rightKneeAngle, currentPose.getRightKneeAngle());
+			isCorrect = isCorrect && isJointCorrect;
+		} else {
+			return false;
+		}
+		
+		return isCorrect;
+	}
+	
+	private void drawJointArc(PVector startJoint, PVector midJoint, PVector endJoint, float angle, float rightAngle) {
+		boolean isJointCorrect = checkCorrectJoint(angle, rightAngle);
+		if (isJointCorrect) {
+			fill(0, 255, 255);
+		} else {
+			fill(255,0,0);
+		}
+		PVector startCurve = PVector.add(startJoint, midJoint).div(2);
+		PVector endCurve = PVector.add(midJoint, endJoint).div(2);
+		curve (startCurve.x, startCurve.y - 100, startCurve.x, startCurve.y, endCurve.x, endCurve.y, endCurve.x, endCurve.y - 100);
+	}
+	
+	private boolean checkCorrectJoint(float currentAngle, float targetAngle) {
+		if (Math.abs(currentAngle - targetAngle) < 5) {
+			return true;
+		}
+		return false;
 	}
 	
 	private void drawJoint (PVector v) {
@@ -148,10 +249,12 @@ public class PosingGame extends PApplet {
 		}
 	}
 	
-	private float calculateAngle(PVector a, PVector b, PVector c) {
-		if (a != null && b!=null && c!=null) {
-			PVector orientation = PVector.sub(b, c);
-			return Math.abs(angleOf(a, b, orientation));
+	private float calculateAngle(PVector startJoint, PVector midJoint, PVector endJoint, float rightAngle) {
+		if (startJoint != null && midJoint != null && endJoint != null) {
+			PVector orientation = PVector.sub(midJoint, endJoint);
+			float angle = Math.abs(angleOf(startJoint, midJoint, orientation));
+			drawJointArc(startJoint, midJoint, endJoint, angle, rightAngle);
+			return angle;
 		}
 		return -1;
 	}
