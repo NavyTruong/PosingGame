@@ -217,6 +217,8 @@ public class PosingGame extends PApplet {
 	
 	private void drawJointArc(PVector startJoint, PVector midJoint, PVector endJoint, float angle, float rightAngle) {
 		boolean isJointCorrect = checkCorrectJoint(angle, rightAngle);
+//		strokeWeight(.01f);
+		noStroke();
 		if (isJointCorrect) {
 			fill(0, 255, 255);
 		} else {
@@ -224,7 +226,13 @@ public class PosingGame extends PApplet {
 		}
 		PVector startCurve = PVector.add(startJoint, midJoint).div(2);
 		PVector endCurve = PVector.add(midJoint, endJoint).div(2);
-		curve (startCurve.x, startCurve.y - 100, startCurve.x, startCurve.y, endCurve.x, endCurve.y, endCurve.x, endCurve.y - 100);
+		beginShape();
+		vertex(midJoint.x, midJoint.y);
+		vertex(startCurve.x, startCurve.y);
+		vertex(endCurve.x, endCurve.y);
+		vertex(midJoint.x, midJoint.y);
+		endShape();
+		curve (startCurve.x, startCurve.y - .1f, startCurve.x, startCurve.y, endCurve.x, endCurve.y, endCurve.x, endCurve.y - .1f);
 	}
 	
 	private boolean checkCorrectJoint(float currentAngle, float targetAngle) {
