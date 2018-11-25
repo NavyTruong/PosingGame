@@ -14,7 +14,7 @@ public class PoseCollection {
 	
 	public void addAllPoses(PApplet app) {
 		PImage img = app.loadImage("data/firstpose.png");
-		addPose(img, 90, 90, 180, 180, 160, 120, 180, 90);
+		addPose(img, 110, 110, 180, 180, 160, 120, 180, 90);
 		img = app.loadImage("data/secondpose.png");
 		addPose(img, 60, 60, 150, 150, 120, 120, 150, 150);
 		img = app.loadImage("data/thirdpose.png");

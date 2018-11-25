@@ -4,6 +4,7 @@ import edu.mtholyoke.cs.comsc243.kinect.Body;
 import edu.mtholyoke.cs.comsc243.kinect.KinectBodyData;
 import edu.mtholyoke.cs.comsc243.kinectTCP.TCPBodyReceiver;
 import processing.core.PApplet;
+import processing.core.PImage;
 import processing.core.PVector;
 
 /**
@@ -33,6 +34,7 @@ public class PosingGame extends PApplet {
 	private float rightKneeAngle;
 	
 	private boolean isGameOver = false;
+	private boolean gameStart = false;
 
 	public void createWindow(boolean useP2D, boolean isFullscreen, float windowsScale) {
 		if (useP2D) {
@@ -80,9 +82,12 @@ public class PosingGame extends PApplet {
 		//draw person
 		KinectBodyData bodyData = kinectReader.getNextData();
 		if(bodyData == null) return;
-		poses.drawPose(this);
+		if (!gameStart) {
+			PImage startButtonImg = loadImage("data/startbutton.png");
+			image(startButtonImg, -.2f, -.6f, .4f, .2f);
+		}
 		Body person = bodyData.getPerson(0);
-		if(person != null && !isGameOver){
+		if(person != null){
 			PVector head = person.getJoint(Body.HEAD);
 			PVector spine = person.getJoint(Body.SPINE_SHOULDER);
 			PVector spineBase = person.getJoint(Body.SPINE_BASE);
@@ -134,23 +139,29 @@ public class PosingGame extends PApplet {
 			drawJoint(footRight);
 			drawJoint(footLeft);
 			
-			currentPose = poses.getCurrentPose();
+			if (handRight!=null && !gameStart) {
+				gameStart = checkTouchStartButton(handRight);
+			}
 			
-			leftShoulderAngle = calculateAngle(elbowLeft, shoulderLeft, hipLeft, currentPose.getLeftShoulderAngle());
-			rightShoulderAngle = calculateAngle(elbowRight, shoulderRight, hipRight, currentPose.getRightShoulderAngle());
-			leftElbowAngle = calculateAngle(handLeft, elbowLeft, shoulderLeft, currentPose.getLeftElbowAngle());
-			rightElbowAngle = calculateAngle(handRight, elbowRight, shoulderRight, currentPose.getRightElbowAngle());
-			leftHipAngle = calculateAngle(shoulderLeft, hipLeft, kneeLeft, currentPose.getLeftHipAngle());
-			rightHipAngle = calculateAngle(shoulderRight, hipRight, kneeRight, currentPose.getRightHipAngle());
-			leftKneeAngle = calculateAngle(hipLeft, kneeLeft, footLeft, currentPose.getLeftKneeAngle());
-			rightKneeAngle = calculateAngle(hipRight, kneeRight, footRight, currentPose.getRightKneeAngle());
-			
-			boolean isCorrectPose = checkCorrectPose(shoulderLeft, shoulderRight, elbowLeft, elbowRight, hipLeft, hipRight, kneeLeft, kneeRight);
-			if (isCorrectPose) {
-				poses.removePose();
-				System.out.println("True Pose");
-				if (poses.isEmpty()) {
-					isGameOver = true;
+			if (!isGameOver && gameStart) {
+				poses.drawPose(this);
+				currentPose = poses.getCurrentPose();
+				
+				leftShoulderAngle = calculateAngle(elbowLeft, shoulderLeft, hipLeft, currentPose.getLeftShoulderAngle());
+				rightShoulderAngle = calculateAngle(elbowRight, shoulderRight, hipRight, currentPose.getRightShoulderAngle());
+				leftElbowAngle = calculateAngle(handLeft, elbowLeft, shoulderLeft, currentPose.getLeftElbowAngle());
+				rightElbowAngle = calculateAngle(handRight, elbowRight, shoulderRight, currentPose.getRightElbowAngle());
+				leftHipAngle = calculateAngle(shoulderLeft, hipLeft, kneeLeft, currentPose.getLeftHipAngle());
+				rightHipAngle = calculateAngle(shoulderRight, hipRight, kneeRight, currentPose.getRightHipAngle());
+				leftKneeAngle = calculateAngle(hipLeft, kneeLeft, footLeft, currentPose.getLeftKneeAngle());
+				rightKneeAngle = calculateAngle(hipRight, kneeRight, footRight, currentPose.getRightKneeAngle());
+				
+				boolean isCorrectPose = checkCorrectPose(shoulderLeft, shoulderRight, elbowLeft, elbowRight, hipLeft, hipRight, kneeLeft, kneeRight);
+				if (isCorrectPose) {
+					poses.removePose();
+					if (poses.isEmpty()) {
+						isGameOver = true;
+					}
 				}
 			}
 		}
@@ -162,6 +173,9 @@ public class PosingGame extends PApplet {
 		
 		if (leftShoulderAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(leftShoulderAngle, currentPose.getLeftShoulderAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(shoulderLeft);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -169,6 +183,9 @@ public class PosingGame extends PApplet {
 		
 		if (rightShoulderAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(rightShoulderAngle, currentPose.getRightShoulderAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(shoulderRight);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -176,6 +193,9 @@ public class PosingGame extends PApplet {
 		
 		if (leftElbowAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(leftElbowAngle, currentPose.getLeftElbowAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(elbowLeft);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -183,6 +203,9 @@ public class PosingGame extends PApplet {
 		
 		if (rightElbowAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(rightElbowAngle, currentPose.getRightElbowAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(elbowRight);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -190,6 +213,9 @@ public class PosingGame extends PApplet {
 		
 		if (leftHipAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(leftHipAngle, currentPose.getLeftHipAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(hipLeft);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -197,6 +223,9 @@ public class PosingGame extends PApplet {
 		
 		if (rightHipAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(rightHipAngle, currentPose.getRightHipAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(hipRight);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -204,6 +233,9 @@ public class PosingGame extends PApplet {
 		
 		if (leftKneeAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(leftKneeAngle, currentPose.getLeftKneeAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(kneeLeft);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -211,6 +243,9 @@ public class PosingGame extends PApplet {
 		
 		if (rightKneeAngle > 0) {
 			boolean isJointCorrect = checkCorrectJoint(rightKneeAngle, currentPose.getRightKneeAngle());
+			if (isJointCorrect) {
+				drawCorrectJoint(kneeRight);
+			}
 			isCorrect = isCorrect && isJointCorrect;
 		} else {
 			return false;
@@ -255,6 +290,13 @@ public class PosingGame extends PApplet {
 		}
 	}
 	
+	private void drawCorrectJoint (PVector v) {
+		if (v != null) {
+			fill(0, 0, 255);
+			ellipse(v.x, v.y, .05f,.05f);
+		}
+	}
+	
 	private void drawConnection (PVector v1, PVector v2) {
 		if (v1 != null && v2 != null) {
 			stroke(0, 0,0);
@@ -276,6 +318,10 @@ public class PosingGame extends PApplet {
 	private float angleOf(PVector v1, PVector v2, PVector axis) {
 		PVector limb = PVector.sub(v2, v1);
 		return degrees(PVector.angleBetween(limb, axis));
+	}
+	
+	private boolean checkTouchStartButton(PVector hand) {
+		return (hand.x > -.2f && hand.x < .2f && hand.y > -.6f && hand.y < -.4f);
 	}
 	
 	public static void main(String[] args) {
