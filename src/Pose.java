@@ -37,14 +37,9 @@ public class Pose {
 	
 	//public void settings()
 	public void draw(PApplet app){
-		//app.stroke(255, 0, 0);
-		//app.ellipse(100, 100, 20, 20);
-		//app.line(100, 110, 100, 140);
-		//app.line(100, 125,80, 110);
-		//app.line(100, 125, 120, 110);
 		app.pushMatrix();
 		app.scale(1,-1);
-		app.image(this.image, -1, -1, 2, 2);
+		app.image(this.image, (float)-1.5, (float)-1.5, 2, 2);
 		app.popMatrix();
 	}
 

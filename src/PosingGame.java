@@ -2,7 +2,6 @@ import java.io.IOException;
 
 import edu.mtholyoke.cs.comsc243.kinect.Body;
 import edu.mtholyoke.cs.comsc243.kinect.KinectBodyData;
-import edu.mtholyoke.cs.comsc243.kinect.Quat;
 import edu.mtholyoke.cs.comsc243.kinectTCP.TCPBodyReceiver;
 import processing.core.PApplet;
 import processing.core.PVector;
@@ -32,6 +31,8 @@ public class PosingGame extends PApplet {
 	private float rightHipAngle;
 	private float leftKneeAngle;
 	private float rightKneeAngle;
+	
+	private boolean isGameOver = false;
 
 	public void createWindow(boolean useP2D, boolean isFullscreen, float windowsScale) {
 		if (useP2D) {
@@ -81,9 +82,8 @@ public class PosingGame extends PApplet {
 		if(bodyData == null) return;
 		poses.drawPose(this);
 		Body person = bodyData.getPerson(0);
-		if(person != null){
+		if(person != null && !isGameOver){
 			PVector head = person.getJoint(Body.HEAD);
-			// Quat q = person.getJointOrientation(Body.HAND_LEFT);
 			PVector spine = person.getJoint(Body.SPINE_SHOULDER);
 			PVector spineBase = person.getJoint(Body.SPINE_BASE);
 			PVector shoulderRight = person.getJoint(Body.SHOULDER_RIGHT);
@@ -148,6 +148,10 @@ public class PosingGame extends PApplet {
 			boolean isCorrectPose = checkCorrectPose(shoulderLeft, shoulderRight, elbowLeft, elbowRight, hipLeft, hipRight, kneeLeft, kneeRight);
 			if (isCorrectPose) {
 				poses.removePose();
+				System.out.println("True Pose");
+				if (poses.isEmpty()) {
+					isGameOver = true;
+				}
 			}
 		}
 	}
@@ -217,7 +221,6 @@ public class PosingGame extends PApplet {
 	
 	private void drawJointArc(PVector startJoint, PVector midJoint, PVector endJoint, float angle, float rightAngle) {
 		boolean isJointCorrect = checkCorrectJoint(angle, rightAngle);
-//		strokeWeight(.01f);
 		noStroke();
 		if (isJointCorrect) {
 			fill(0, 255, 255);
@@ -225,18 +228,21 @@ public class PosingGame extends PApplet {
 			fill(255,0,0);
 		}
 		PVector startCurve = PVector.add(startJoint, midJoint).div(2);
+//		startCurve = PVector.add(startCurve, midJoint).div(2);
 		PVector endCurve = PVector.add(midJoint, endJoint).div(2);
+//		endCurve = PVector.add(midJoint, endCurve).div(2);
 		beginShape();
 		vertex(midJoint.x, midJoint.y);
 		vertex(startCurve.x, startCurve.y);
 		vertex(endCurve.x, endCurve.y);
 		vertex(midJoint.x, midJoint.y);
 		endShape();
-		curve (startCurve.x, startCurve.y - .1f, startCurve.x, startCurve.y, endCurve.x, endCurve.y, endCurve.x, endCurve.y - .1f);
+		strokeWeight(.3f);
+		curve (midJoint.x, midJoint.y, startCurve.x, startCurve.y, endCurve.x, endCurve.y, midJoint.x, midJoint.y);
 	}
 	
 	private boolean checkCorrectJoint(float currentAngle, float targetAngle) {
-		if (Math.abs(currentAngle - targetAngle) < 5) {
+		if (Math.abs(currentAngle - targetAngle) < 10) {
 			return true;
 		}
 		return false;
