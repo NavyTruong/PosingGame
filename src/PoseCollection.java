@@ -9,12 +9,8 @@ public class PoseCollection {
 	
 	public PoseCollection(PApplet app){
 		poses = new LinkedList<Pose>();
-		
-		//for(int i = 0; i <= poses.size(); i++){
-			//poses.add(pose = new Pose(pose.getImage(), pose.getLeftArmAngle(), pose.getRightArmAngle() ));
-		//}
 		PImage img = app.loadImage("poses.png");
-		addPose(img, 90, 90, 180, 180, 90, 120, 180, 45);
+		addPose(img, 90, 90, 180, 180, 160, 120, 180, 90);
 	}
 	
 	public void drawPose(PApplet app){
@@ -42,5 +38,9 @@ public class PoseCollection {
 	public boolean removePose() {
 		Pose removedPose = poses.poll();
 		return (removedPose != null);
+	}
+	
+	public boolean isEmpty() {
+		return poses.isEmpty();
 	}
 }
