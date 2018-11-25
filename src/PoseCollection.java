@@ -9,10 +9,11 @@ public class PoseCollection {
 	
 	public PoseCollection(PApplet app){
 		poses = new LinkedList<Pose>();
-		addAllPoses(app);
+//		addAllPoses(app);
 	}
 	
 	public void addAllPoses(PApplet app) {
+		System.out.println("Add all poses");
 		PImage img = app.loadImage("data/firstpose.png");
 		addPose(img, 110, 110, 180, 180, 160, 120, 180, 90);
 		img = app.loadImage("data/secondpose.png");
@@ -49,6 +50,6 @@ public class PoseCollection {
 	}
 	
 	public boolean isEmpty() {
-		return poses.isEmpty();
+		return poses.size() == 0;
 	}
 }

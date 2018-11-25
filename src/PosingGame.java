@@ -32,8 +32,7 @@ public class PosingGame extends PApplet {
 	private float rightHipAngle;
 	private float leftKneeAngle;
 	private float rightKneeAngle;
-	
-	private boolean isGameOver = false;
+
 	private boolean gameStart = false;
 
 	public void createWindow(boolean useP2D, boolean isFullscreen, float windowsScale) {
@@ -139,11 +138,23 @@ public class PosingGame extends PApplet {
 			drawJoint(footRight);
 			drawJoint(footLeft);
 			
-			if (handRight!=null && !gameStart) {
-				gameStart = checkTouchStartButton(handRight);
+			if (shoulderLeft != null && shoulderRight != null && hipLeft != null && hipRight != null) {
+				beginShape();
+				vertex(shoulderLeft.x, shoulderLeft.y);
+				vertex(shoulderRight.x, shoulderRight.y);
+				vertex(hipRight.x, hipRight.y);
+				vertex(hipLeft.x, hipLeft.y);
+				endShape();
 			}
 			
-			if (!isGameOver && gameStart) {
+			if (handRight!=null && !gameStart) {
+				gameStart = checkTouchStartButton(handRight);
+				if (gameStart) {
+					poses.addAllPoses(this);
+				}
+			}
+			
+			if (gameStart) {
 				poses.drawPose(this);
 				currentPose = poses.getCurrentPose();
 				
@@ -160,7 +171,7 @@ public class PosingGame extends PApplet {
 				if (isCorrectPose) {
 					poses.removePose();
 					if (poses.isEmpty()) {
-						isGameOver = true;
+						gameStart = false;
 					}
 				}
 			}
