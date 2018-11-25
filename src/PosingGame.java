@@ -2,7 +2,6 @@ import java.io.IOException;
 
 import edu.mtholyoke.cs.comsc243.kinect.Body;
 import edu.mtholyoke.cs.comsc243.kinect.KinectBodyData;
-import edu.mtholyoke.cs.comsc243.kinect.Quat;
 import edu.mtholyoke.cs.comsc243.kinectTCP.TCPBodyReceiver;
 import processing.core.PApplet;
 import processing.core.PVector;
@@ -85,7 +84,6 @@ public class PosingGame extends PApplet {
 		Body person = bodyData.getPerson(0);
 		if(person != null && !isGameOver){
 			PVector head = person.getJoint(Body.HEAD);
-			// Quat q = person.getJointOrientation(Body.HAND_LEFT);
 			PVector spine = person.getJoint(Body.SPINE_SHOULDER);
 			PVector spineBase = person.getJoint(Body.SPINE_BASE);
 			PVector shoulderRight = person.getJoint(Body.SHOULDER_RIGHT);
