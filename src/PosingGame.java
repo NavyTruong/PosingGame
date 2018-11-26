@@ -35,7 +35,17 @@ public class PosingGame extends PApplet {
 
 	private boolean gameStart = false;
 	
+	private static final int TIME = 120;
+	private int startTime;
+	private int currentTime = -2;
+	
 	private PImage instructionImg;
+	private PImage gameOverImg;
+	private PImage startButtonImg;
+	private PImage timeLabel;
+	
+	private int score = 0;
+	
 	public void createWindow(boolean useP2D, boolean isFullscreen, float windowsScale) {
 		if (useP2D) {
 			if(isFullscreen) {
@@ -62,7 +72,10 @@ public class PosingGame extends PApplet {
 
 	public void settings() {
 		createWindow(true, true, .5f);
-		instructionImg = loadImage("data/instructions.jpeg");
+		instructionImg = loadImage("data/instruction.png");
+		gameOverImg = loadImage("data/gameover.png");
+		startButtonImg = loadImage("data/startbutton.png");
+		timeLabel = loadImage("data/time.png");
 	}
 
 	public void setup(){	
@@ -80,6 +93,10 @@ public class PosingGame extends PApplet {
 		setScale(.5f);
 		noStroke();
 		background(255,255,255);
+		
+		drawTimeBar();
+		drawScore();
+		
 		//draw person
 		KinectBodyData bodyData = kinectReader.getNextData();
 		if(bodyData == null) return;
@@ -87,10 +104,13 @@ public class PosingGame extends PApplet {
 			pushMatrix();
 			scale(1,-1);		
 			// load instruction and start button
-			image(instructionImg, -2, -1.75f, 4, 3);
+			if (currentTime == -2) {
+				image(instructionImg, -2, -1.75f, 4, 3);
+			} else {
+				image(gameOverImg, -2, -1.75f, 4, 3);
+			}
 			//image(startButtonImg, -.2f, -.6f, .4f, .2f);
 			popMatrix();
-			PImage startButtonImg = loadImage("data/startbutton.png");
 			image(startButtonImg, -.2f, -.6f, .4f, .2f);
 		}
 		Body person = bodyData.getPerson(0);
@@ -146,9 +166,10 @@ public class PosingGame extends PApplet {
 			drawJoint(footRight);
 			drawJoint(footLeft);
 			
-			if (shoulderLeft != null && shoulderRight != null && hipLeft != null && hipRight != null) {
+			if (spine != null && shoulderLeft != null && shoulderRight != null && hipLeft != null && hipRight != null) {
 				beginShape();
 				vertex(shoulderLeft.x, shoulderLeft.y);
+				vertex(spine.x, spine.y);
 				vertex(shoulderRight.x, shoulderRight.y);
 				vertex(hipRight.x, hipRight.y);
 				vertex(hipLeft.x, hipLeft.y);
@@ -158,12 +179,19 @@ public class PosingGame extends PApplet {
 			if (handRight!=null && !gameStart) {
 				gameStart = checkTouchStartButton(handRight);
 				if (gameStart) {
+					startTime = millis();
+					score = 0;
 					poses.addAllPoses(this);
 				}
 			}
 			
 			if (gameStart) {
 				poses.drawPose(this);
+				currentTime = TIME - (millis() - startTime)/1000;
+				if (currentTime == 0) {
+					gameStart = false;
+				}
+				
 				currentPose = poses.getCurrentPose();
 				
 				leftShoulderAngle = calculateAngle(elbowLeft, shoulderLeft, hipLeft, currentPose.getLeftShoulderAngle());
@@ -178,12 +206,40 @@ public class PosingGame extends PApplet {
 				boolean isCorrectPose = checkCorrectPose(shoulderLeft, shoulderRight, elbowLeft, elbowRight, hipLeft, hipRight, kneeLeft, kneeRight);
 				if (isCorrectPose) {
 					poses.removePose();
+					score += 5;
 					if (poses.isEmpty()) {
 						gameStart = false;
+						currentTime = -1;
 					}
 				}
 			}
 		}
+	}
+	
+	private void drawTimeBar() {
+		fill(0,0,0);
+		float x = -1f;
+		float y = 1.2f;
+		float barWidth = 1f;
+		float barHeight = .1f;
+		final float BORDER = .01f;
+		image(timeLabel, x, y, 0.4f, 0.4f);
+		rect(x, y, barWidth, barHeight);
+		fill(244, 137, 66);
+		// draw the orange bar if the level is not 0
+		if (currentTime > 0) {
+			rect(x+BORDER, y, barWidth*currentTime/TIME-BORDER*2, barHeight-BORDER*2, 7);
+		}
+	}
+	
+	private void drawScore() {
+		fill(255,0,0);
+		pushMatrix();
+		scale(.006f);
+		scale(1,-1);
+		textSize(43);
+		text("score: "+score, 80, -200);
+		popMatrix();
 	}
 	
 	private boolean checkCorrectPose(PVector shoulderLeft, PVector shoulderRight, PVector elbowLeft, PVector elbowRight, 
@@ -319,7 +375,7 @@ public class PosingGame extends PApplet {
 	private void drawConnection (PVector v1, PVector v2) {
 		if (v1 != null && v2 != null) {
 			stroke(0, 0,0);
-			strokeWeight(.02f);
+			strokeWeight(.05f);
 			line(v1.x,v1.y, v2.x, v2.y);
 		}
 	}
