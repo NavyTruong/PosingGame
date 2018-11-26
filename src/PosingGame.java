@@ -34,7 +34,8 @@ public class PosingGame extends PApplet {
 	private float rightKneeAngle;
 
 	private boolean gameStart = false;
-
+	
+	private PImage instructionImg;
 	public void createWindow(boolean useP2D, boolean isFullscreen, float windowsScale) {
 		if (useP2D) {
 			if(isFullscreen) {
@@ -61,6 +62,7 @@ public class PosingGame extends PApplet {
 
 	public void settings() {
 		createWindow(true, true, .5f);
+		instructionImg = loadImage("data/instructions.jpeg");
 	}
 
 	public void setup(){	
@@ -82,6 +84,12 @@ public class PosingGame extends PApplet {
 		KinectBodyData bodyData = kinectReader.getNextData();
 		if(bodyData == null) return;
 		if (!gameStart) {
+			pushMatrix();
+			scale(1,-1);		
+			// load instruction and start button
+			image(instructionImg, -2, -1.75f, 4, 3);
+			//image(startButtonImg, -.2f, -.6f, .4f, .2f);
+			popMatrix();
 			PImage startButtonImg = loadImage("data/startbutton.png");
 			image(startButtonImg, -.2f, -.6f, .4f, .2f);
 		}
