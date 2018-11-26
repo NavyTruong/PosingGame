@@ -43,6 +43,7 @@ public class PosingGame extends PApplet {
 	private PImage gameOverImg;
 	private PImage startButtonImg;
 	private PImage timeLabel;
+	private PImage scoreImg;
 	
 	private int score = 0;
 	
@@ -72,10 +73,12 @@ public class PosingGame extends PApplet {
 
 	public void settings() {
 		createWindow(true, true, .5f);
+		// Load images
 		instructionImg = loadImage("data/instruction.png");
 		gameOverImg = loadImage("data/gameover.png");
 		startButtonImg = loadImage("data/startbutton.png");
 		timeLabel = loadImage("data/time.png");
+		scoreImg = loadImage("data/score.png");
 	}
 
 	public void setup(){	
@@ -94,6 +97,7 @@ public class PosingGame extends PApplet {
 		noStroke();
 		background(255,255,255);
 		
+		// Draw time bar and score
 		drawTimeBar();
 		drawScore();
 		
@@ -101,18 +105,9 @@ public class PosingGame extends PApplet {
 		KinectBodyData bodyData = kinectReader.getNextData();
 		if(bodyData == null) return;
 		if (!gameStart) {
-			pushMatrix();
-			scale(1,-1);		
-			// load instruction and start button
-			if (currentTime == -2) {
-				image(instructionImg, -2, -1.75f, 4, 3);
-			} else {
-				image(gameOverImg, -2, -1.75f, 4, 3);
-			}
-			//image(startButtonImg, -.2f, -.6f, .4f, .2f);
-			popMatrix();
-			image(startButtonImg, -.2f, -.6f, .4f, .2f);
+			drawInstruction();
 		}
+		
 		Body person = bodyData.getPerson(0);
 		if(person != null){
 			PVector head = person.getJoint(Body.HEAD);
@@ -166,6 +161,7 @@ public class PosingGame extends PApplet {
 			drawJoint(footRight);
 			drawJoint(footLeft);
 			
+			// Fill in the torso
 			if (spine != null && shoulderLeft != null && shoulderRight != null && hipLeft != null && hipRight != null) {
 				beginShape();
 				vertex(shoulderLeft.x, shoulderLeft.y);
@@ -176,6 +172,7 @@ public class PosingGame extends PApplet {
 				endShape();
 			}
 			
+			// Check start button is touched and start the game
 			if (handRight!=null && !gameStart) {
 				gameStart = checkTouchStartButton(handRight);
 				if (gameStart) {
@@ -187,10 +184,7 @@ public class PosingGame extends PApplet {
 			
 			if (gameStart) {
 				poses.drawPose(this);
-				currentTime = TIME - (millis() - startTime)/1000;
-				if (currentTime == 0) {
-					gameStart = false;
-				}
+				updateTime();
 				
 				currentPose = poses.getCurrentPose();
 				
@@ -204,6 +198,8 @@ public class PosingGame extends PApplet {
 				rightKneeAngle = calculateAngle(hipRight, kneeRight, footRight, currentPose.getRightKneeAngle());
 				
 				boolean isCorrectPose = checkCorrectPose(shoulderLeft, shoulderRight, elbowLeft, elbowRight, hipLeft, hipRight, kneeLeft, kneeRight);
+				
+				// Change pose if a pose is matched and set game over when running out of poses
 				if (isCorrectPose) {
 					poses.removePose();
 					score += 5;
@@ -216,6 +212,9 @@ public class PosingGame extends PApplet {
 		}
 	}
 	
+	/**
+	 * Draw the time bar
+	 */
 	private void drawTimeBar() {
 		fill(0,0,0);
 		float x = -1f;
@@ -232,14 +231,39 @@ public class PosingGame extends PApplet {
 		}
 	}
 	
+	/**
+	 * Draw the score
+	 */
 	private void drawScore() {
 		fill(255,0,0);
+		image(scoreImg,.5f, 1.2f, 0.4f, 0.4f);
 		pushMatrix();
-		scale(.006f);
+		scale(.003f);
 		scale(1,-1);
-		textSize(43);
-		text("score: "+score, 80, -200);
+		textSize(100);
+		text(""+score, 300, -400);
 		popMatrix();
+	}
+	
+	private void drawInstruction() {
+		pushMatrix();
+		scale(1,-1);		
+		// load instruction and start button
+		if (currentTime == -2) {
+			image(instructionImg, -2, -1.75f, 4, 3);
+		} else {
+			image(gameOverImg, -2, -1.75f, 4, 3);
+		}
+		//image(startButtonImg, -.2f, -.6f, .4f, .2f);
+		popMatrix();
+		image(startButtonImg, -.2f, -.6f, .4f, .2f);
+	}
+	
+	private void updateTime() {
+		currentTime = TIME - (millis() - startTime)/1000;
+		if (currentTime <= 0) {
+			gameStart = false;
+		}
 	}
 	
 	private boolean checkCorrectPose(PVector shoulderLeft, PVector shoulderRight, PVector elbowLeft, PVector elbowRight, 
