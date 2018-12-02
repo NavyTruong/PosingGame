@@ -14,6 +14,18 @@ public class Pose {
 	private float RightKneeAngle;
 	public PImage poseImage;
 	
+	/**
+	 * This class manage the pose with its 8 coded angles
+	 * @param image the image of the pose
+	 * @param leftShoulderAngle
+	 * @param rightShoulderAngle
+	 * @param leftElbowAngle
+	 * @param rightElbowAngle
+	 * @param leftHipAngle
+	 * @param rightHipAngle
+	 * @param leftKneeAngle
+	 * @param rightKneeAngle
+	 */
 	public Pose(PImage image, float leftShoulderAngle, float rightShoulderAngle, float leftElbowAngle, float rightElbowAngle, 
 			float leftHipAngle, float rightHipAngle, float leftKneeAngle, float rightKneeAngle){
 		this.image = image;
@@ -27,17 +39,13 @@ public class Pose {
 		this.setRightKneeAngle(rightKneeAngle);
 	}
 	
-	public PImage getImage() {
-		return image;
-	}
-	
-	public void setImage(PImage image) {
-		this.image = image;
-	}
-	
-	//public void settings()
+	/**
+	 * Draw the pose to the PApplet
+	 * @param app the main sketch
+	 */
 	public void draw(PApplet app){
 		app.pushMatrix();
+		// Display the image of the pose
 		app.scale(1,-1);
 		app.image(this.image, (float)-1.5, (float)-1.5, 2, 2);
 		app.popMatrix();

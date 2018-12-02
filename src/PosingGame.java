@@ -8,12 +8,10 @@ import processing.core.PImage;
 import processing.core.PVector;
 
 /**
- * The game tracks user’s right arm. User needs to collects 5 power balls when the monster is sleeping. 
- * If the monster is awake and the arm is moving then the user loses their power. 
- * They have 5 power levels to lose. 
- * When all power balls are collected, the monster is defeated if touched.
- * User instruction is shown on screen before the game starts.
- * @author Natalie Truong and Carla 
+ * The user has 2 minutes to make as many poses as possible.
+ * For each pose, the user has 5 points.
+ * Instruction is shown at the beginning of the game
+ * @author Natalie Truong and Carla Gonzalez-Vazquez
  *
  */
 public class PosingGame extends PApplet {
@@ -90,6 +88,8 @@ public class PosingGame extends PApplet {
 			exit();
 		}
 		poses = new PoseCollection(this);
+		poses.addAllPoses(this);
+		currentPose = poses.getCurrentPose();
 	}
 	
 	public void draw(){
@@ -108,7 +108,7 @@ public class PosingGame extends PApplet {
 			drawInstruction();
 		}
 		
-		Body person = bodyData.getPerson(0);
+		Body person = getClosestBody(bodyData);
 		if(person != null){
 			PVector head = person.getJoint(Body.HEAD);
 			PVector spine = person.getJoint(Body.SPINE_SHOULDER);
@@ -179,14 +179,13 @@ public class PosingGame extends PApplet {
 					startTime = millis();
 					score = 0;
 					poses.addAllPoses(this);
+					currentPose = poses.getCurrentPose();
 				}
 			}
 			
 			if (gameStart) {
 				poses.drawPose(this);
 				updateTime();
-				
-				currentPose = poses.getCurrentPose();
 				
 				leftShoulderAngle = calculateAngle(elbowLeft, shoulderLeft, hipLeft, currentPose.getLeftShoulderAngle());
 				rightShoulderAngle = calculateAngle(elbowRight, shoulderRight, hipRight, currentPose.getRightShoulderAngle());
@@ -202,6 +201,7 @@ public class PosingGame extends PApplet {
 				// Change pose if a pose is matched and set game over when running out of poses
 				if (isCorrectPose) {
 					poses.removePose();
+					currentPose = poses.getCurrentPose();
 					score += 5;
 					if (poses.isEmpty()) {
 						gameStart = false;
@@ -210,6 +210,32 @@ public class PosingGame extends PApplet {
 				}
 			}
 		}
+	}
+	
+	public Body getClosestBody(KinectBodyData bodyData) {
+		int personCnt = bodyData.getPersonCount();
+		
+		if (personCnt <= 0) return null;
+		
+		Body closestBody = null;
+		float dist = Float.MAX_VALUE;
+		
+		for(int i = 0; i < personCnt; i++) {
+			Body b = bodyData.getPerson(i);
+			if(b != null) {
+				PVector head = b.getJoint(Body.HEAD);
+				if(head != null) {
+					float d = head.mag();
+					if(d < dist) {
+						dist = d;
+						closestBody = b;
+					}
+				}
+			}
+			
+		}
+		return closestBody;
+		
 	}
 	
 	/**
@@ -245,6 +271,9 @@ public class PosingGame extends PApplet {
 		popMatrix();
 	}
 	
+	/**
+	 * Draw instruction
+	 */
 	private void drawInstruction() {
 		pushMatrix();
 		scale(1,-1);		
@@ -259,6 +288,9 @@ public class PosingGame extends PApplet {
 		image(startButtonImg, -.2f, -.6f, .4f, .2f);
 	}
 	
+	/**
+	 * Update time and check if time is up
+	 */
 	private void updateTime() {
 		currentTime = TIME - (millis() - startTime)/1000;
 		if (currentTime <= 0) {
@@ -266,6 +298,18 @@ public class PosingGame extends PApplet {
 		}
 	}
 	
+	/**
+	 * Check if all joints get the correct angle
+	 * @param shoulderLeft
+	 * @param shoulderRight
+	 * @param elbowLeft
+	 * @param elbowRight
+	 * @param hipLeft
+	 * @param hipRight
+	 * @param kneeLeft
+	 * @param kneeRight
+	 * @return true if all joints are correct
+	 */
 	private boolean checkCorrectPose(PVector shoulderLeft, PVector shoulderRight, PVector elbowLeft, PVector elbowRight, 
 			PVector hipLeft, PVector hipRight, PVector kneeLeft, PVector kneeRight) {
 		boolean isCorrect = true;
@@ -353,7 +397,16 @@ public class PosingGame extends PApplet {
 		return isCorrect;
 	}
 	
+	/**
+	 * Draw the arc around joint
+	 * @param startJoint
+	 * @param midJoint
+	 * @param endJoint
+	 * @param angle
+	 * @param rightAngle
+	 */
 	private void drawJointArc(PVector startJoint, PVector midJoint, PVector endJoint, float angle, float rightAngle) {
+		// Check correct joint to choose the color for the arc
 		boolean isJointCorrect = checkCorrectJoint(angle, rightAngle);
 		noStroke();
 		if (isJointCorrect) {
@@ -361,10 +414,10 @@ public class PosingGame extends PApplet {
 		} else {
 			fill(255,0,0);
 		}
+		// Draw the arc
 		PVector startCurve = PVector.add(startJoint, midJoint).div(2);
-//		startCurve = PVector.add(startCurve, midJoint).div(2);
 		PVector endCurve = PVector.add(midJoint, endJoint).div(2);
-//		endCurve = PVector.add(midJoint, endCurve).div(2);
+		// Fill in the arc
 		beginShape();
 		vertex(midJoint.x, midJoint.y);
 		vertex(startCurve.x, startCurve.y);
@@ -375,6 +428,12 @@ public class PosingGame extends PApplet {
 		curve (midJoint.x, midJoint.y, startCurve.x, startCurve.y, endCurve.x, endCurve.y, midJoint.x, midJoint.y);
 	}
 	
+	/**
+	 * Check if the angle of the user's joint is below 10 degree from the correct angle
+	 * @param currentAngle the user's joint angle
+	 * @param targetAngle the correct coded angle
+	 * @return true if the angle of the user's joint is below 10 degree from the correct angle
+	 */
 	private boolean checkCorrectJoint(float currentAngle, float targetAngle) {
 		if (Math.abs(currentAngle - targetAngle) < 10) {
 			return true;
@@ -382,6 +441,10 @@ public class PosingGame extends PApplet {
 		return false;
 	}
 	
+	/**
+	 * Draw the joint in black
+	 * @param v the joint location
+	 */
 	private void drawJoint (PVector v) {
 		if (v != null) {
 			fill(0, 0, 0);
@@ -389,13 +452,22 @@ public class PosingGame extends PApplet {
 		}
 	}
 	
+	/**
+	 * Draw correct joint in green
+	 * @param v
+	 */
 	private void drawCorrectJoint (PVector v) {
 		if (v != null) {
-			fill(0, 0, 255);
+			fill(0, 255, 0);
 			ellipse(v.x, v.y, .05f,.05f);
 		}
 	}
 	
+	/**
+	 * Draw connections between 2 joints
+	 * @param v1 joint1
+	 * @param v2 joint2
+	 */
 	private void drawConnection (PVector v1, PVector v2) {
 		if (v1 != null && v2 != null) {
 			stroke(0, 0,0);
@@ -404,6 +476,14 @@ public class PosingGame extends PApplet {
 		}
 	}
 	
+	/**
+	 * Calculate the angle and draw the arc
+	 * @param startJoint
+	 * @param midJoint
+	 * @param endJoint
+	 * @param rightAngle the correct coded angle
+	 * @return the angle if none of the start, mid and end is null, else return -1
+	 */
 	private float calculateAngle(PVector startJoint, PVector midJoint, PVector endJoint, float rightAngle) {
 		if (startJoint != null && midJoint != null && endJoint != null) {
 			PVector orientation = PVector.sub(midJoint, endJoint);
@@ -414,11 +494,23 @@ public class PosingGame extends PApplet {
 		return -1;
 	}
 	
+	/**
+	 * Calculate angle of 2 vectors and an axis
+	 * @param v1
+	 * @param v2
+	 * @param axis
+	 * @return degree of the angle
+	 */
 	private float angleOf(PVector v1, PVector v2, PVector axis) {
 		PVector limb = PVector.sub(v2, v1);
 		return degrees(PVector.angleBetween(limb, axis));
 	}
 	
+	/**
+	 * Check if the start button has been touched
+	 * @param hand
+	 * @return true if the right hand is inside the button
+	 */
 	private boolean checkTouchStartButton(PVector hand) {
 		return (hand.x > -.2f && hand.x < .2f && hand.y > -.6f && hand.y < -.4f);
 	}
